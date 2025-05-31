@@ -24,7 +24,7 @@ jobs:
     - name: Test with curl
       run: |
         sleep 5
-        curl -f http://localhost:8080 || (docker logs test-container && exit 1)
+        curl -f http://localhost:5005 || (docker logs test-container && exit 1)
 
     - name: Deploy to VM via SSH
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
