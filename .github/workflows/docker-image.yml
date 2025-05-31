@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Docker Image CI (Local Only)
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-test-deploy:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -15,29 +15,18 @@ jobs:
 
     - name: Build the Docker image
       run: |
-        docker build . --file Dockerfile --tag my-image-name:latest
+        docker build . --file Dockerfile --tag flask-app:latest
 
     - name: Run container for testing
       run: |
-        docker run -d -p 8080:80 --name test-container my-image-name:latest
+        docker run -d -p 5005:5005 --name test-container flask-app:latest
 
     - name: Test with curl
       run: |
         sleep 5
         curl -f http://localhost:5005 || (docker logs test-container && exit 1)
 
-    - name: Deploy to VM via SSH
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      uses: appleboy/ssh-action@v1.2.0
-      with:
-        host: ${{ secrets.REMOTE_SERVER_ADDRESS }}
-        username: ${{ secrets.REMOTE_SERVER_USERNAME }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
-          cd /Users/aamirbelalkhan/Desktop/untitled folder 14/devops_assigment
-          git pull origin main
-          docker stop myapp || true
-          docker rm myapp || true
-          docker build . --file Dockerfile --tag flask-app:latest
-          docker run -d --name myapp -p 80:80 flask-app:latest
-
+    - name: Clean up test container
+      run: |
+        docker stop test-container
+        docker rm test-container
